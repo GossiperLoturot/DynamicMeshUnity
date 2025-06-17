@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <template.hpp>
+#include <dynamic_mesh.hpp>
 
 TEST(test, add_function) {
   EXPECT_EQ(add(2, 3), 5);

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 4.0)
-project(template VERSION 0.1.0 LANGUAGES CXX)
+project(dynamic_mesh VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -21,13 +21,13 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest boost)
 
 # library
-add_library(template_lib SHARED src/template.cpp)
-target_link_libraries(template_lib Boost::geometry)
-target_include_directories(template_lib PUBLIC include)
+add_library(dynamic_mesh_lib SHARED src/dynamic_mesh.cpp)
+target_link_libraries(dynamic_mesh_lib Boost::geometry)
+target_include_directories(dynamic_mesh_lib PUBLIC include)
 
 # test
 enable_testing()
-add_executable(template_test test/main.cpp)
-target_link_libraries(template_test GTest::gtest_main template_lib)
-add_test(NAME test COMMAND template_test)
+add_executable(dynamic_mesh_test test/main.cpp)
+target_link_libraries(dynamic_mesh_test GTest::gtest_main dynamic_mesh_lib)
+add_test(NAME test COMMAND dynamic_mesh_test)
 
