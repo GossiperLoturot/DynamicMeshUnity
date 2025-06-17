@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.0)
+cmake_minimum_required(VERSION 3.10)
 project(dynamic_mesh VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -10,6 +10,7 @@ include(FetchContent)
 FetchContent_Declare(
   googletest
   URL https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
+  DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 
 set(BOOST_ENABLE_CMAKE ON)
@@ -17,6 +18,7 @@ set(BOOST_INCLUDE_LIBRARIES geometry)
 FetchContent_Declare(
   boost
   URL https://github.com/boostorg/boost/releases/download/boost-1.88.0/boost-1.88.0-cmake.tar.gz
+  DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 FetchContent_MakeAvailable(googletest boost)
 
