@@ -1,5 +1,8 @@
+.idea
 Library
 Logs
 UserSettings
+obj
 *.csproj
 *.sln
+*.dll
