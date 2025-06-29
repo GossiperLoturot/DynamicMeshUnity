@@ -1,15 +1,17 @@
-#include <dynamic_mesh.hpp>
+#include <stdio.h>
+#include <dynmesh.hpp>
 #include <gtest/gtest.h>
 
 TEST(test, add_function) {
-  size_t size = 10;
-  VertexPosition v[size * size * size];
-  VertexId i[size * size * size * 18];
-  SDFValue sdf[size * size * size];
+  const int size = 4;
 
-  for (size_t j = 0; j < size * size * size; j++) {
-    sdf[j] = SDFValue(j % 3 - 1);
+  auto vertices = std::array<VertexPosition, size * size * size>();
+  auto triangles = std::array<VertexId, size * size * size * 18>();
+  auto sdf = std::array<SDFValue, size * size * size>();
+
+  for (int i = 0; i < size * size * size; ++i) {
+    sdf[i] = static_cast<float>(i % 3) - 1.0f;
   }
 
-  naive_surface_nets(v, i, sdf, size);
+  naive_surface_nets(vertices.data(), triangles.data(), sdf.data(), size);
 }
