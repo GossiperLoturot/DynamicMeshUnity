@@ -100,8 +100,8 @@ extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API naive_surface_nets(
           auto p1 = get_neighbor(p, nid1);
           auto sd0 = sdf[get_id(p0, size)];
           auto sd1 = sdf[get_id(p1, size)];
-          vertex +=
-              lerp(p0.cast<float>(), p1.cast<float>(), (0.0f - sd0) / (sd1 - sd0));
+          vertex += lerp(p0.cast<float>(), p1.cast<float>(),
+                         (0.0f - sd0) / (sd1 - sd0));
           ++mix_size;
         }
 

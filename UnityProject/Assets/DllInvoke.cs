@@ -5,14 +5,14 @@ public class DllInvoke : MonoBehaviour
 {
     [DllImport("libdynmesh")]
     private static extern int naive_surface_nets(Vector3[] vertices, int[] triangles, float[] sdf, int size);
-    
+
     void Start()
     {
         var size = 16;
         var vertices = new Vector3[size * size * size];
         var triangles = new int[size * size * size * 18];
         var sdf = new float[size * size * size];
-        
+
         var origin = new Vector3(size / 2f, size / 2f, size / 2f);
         for (var x = 0; x < size; x++)
         {
@@ -26,7 +26,7 @@ public class DllInvoke : MonoBehaviour
                 }
             }
         }
-        
+
         naive_surface_nets(vertices, triangles, sdf, size);
 
         var mesh = new Mesh();

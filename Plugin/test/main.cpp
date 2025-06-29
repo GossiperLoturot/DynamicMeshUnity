@@ -1,6 +1,6 @@
-#include <stdio.h>
 #include <dynmesh.hpp>
 #include <gtest/gtest.h>
+#include <stdio.h>
 
 TEST(test, add_function) {
   const int size = 4;
