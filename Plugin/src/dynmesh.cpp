@@ -49,12 +49,51 @@ void make_face(VertexId *triangles, int *triangles_count, VertexId id0,
   }
 }
 
+float interpolate_sdf(VertexPosition p, SDFValue *sdf, int size) {
+  int x0 = static_cast<int>(p.x());
+  int y0 = static_cast<int>(p.y());
+  int z0 = static_cast<int>(p.z());
+  int x1 = x0 + 1;
+  int y1 = y0 + 1;
+  int z1 = z0 + 1;
+
+  float xd = p.x() - x0;
+  float yd = p.y() - y0;
+  float zd = p.z() - z0;
+
+  float c00 = sdf[get_id(Position(x0, y0, z0), size)] * (1 - xd) +
+              sdf[get_id(Position(x1, y0, z0), size)] * xd;
+  float c01 = sdf[get_id(Position(x0, y0, z1), size)] * (1 - xd) +
+              sdf[get_id(Position(x1, y0, z1), size)] * xd;
+  float c10 = sdf[get_id(Position(x0, y1, z0), size)] * (1 - xd) +
+              sdf[get_id(Position(x1, y1, z0), size)] * xd;
+  float c11 = sdf[get_id(Position(x0, y1, z1), size)] * (1 - xd) +
+              sdf[get_id(Position(x1, y1, z1), size)] * xd;
+
+  float c0 = c00 * (1 - yd) + c10 * yd;
+  float c1 = c01 * (1 - yd) + c11 * yd;
+
+  return c0 * (1 - zd) + c1 * zd;
+}
+
+VertexPosition compute_normal(VertexPosition p, SDFValue *sdf, int size) {
+  float h = 0.01f;
+  float dx = interpolate_sdf(p + VertexPosition(h, 0, 0), sdf, size) -
+             interpolate_sdf(p - VertexPosition(h, 0, 0), sdf, size);
+  float dy = interpolate_sdf(p + VertexPosition(0, h, 0), sdf, size) -
+             interpolate_sdf(p - VertexPosition(0, h, 0), sdf, size);
+  float dz = interpolate_sdf(p + VertexPosition(0, 0, h), sdf, size) -
+             interpolate_sdf(p - VertexPosition(0, 0, h), sdf, size);
+  return VertexPosition(dx, dy, dz).normalized();
+}
+
 // This function implements the naive surface nets algorithm.
 // vertices: array of VertexPosition, array length must be at least size^3.
 // triangles: array of VertexId, array length must be at least size^3 * 18.
 // sdf: array of SDFValue, array length must be at least size^3.
-extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API naive_surface_nets(
-    VertexPosition *vertices, VertexId *triangles, SDFValue *sdf, int size) {
+extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API
+naive_surface_nets(VertexPosition *vertices, VertexId *triangles,
+                   VertexPosition *normals, SDFValue *sdf, int size) {
 
   int vertex_count = 0;
   int triangle_count = 0;
@@ -108,6 +147,7 @@ extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API naive_surface_nets(
         vertex /= static_cast<float>(mix_size);
 
         vertices[vertex_count] = vertex;
+        normals[vertex_count] = compute_normal(vertex, sdf, size);
         indices[get_id(p, size)] = vertex_count;
         ++vertex_count;
 

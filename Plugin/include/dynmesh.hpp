@@ -13,4 +13,5 @@ typedef Eigen::Vector3f VertexPosition;
 typedef int VertexId;
 
 extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API naive_surface_nets(
-    VertexPosition *vertices, VertexId *triangles, SDFValue *sdf, int size);
+    VertexPosition *vertices, VertexId *triangles, VertexPosition *normals,
+    SDFValue *sdf, int size);
