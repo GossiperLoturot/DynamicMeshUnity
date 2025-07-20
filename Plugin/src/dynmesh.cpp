@@ -1,30 +1,32 @@
 #include <Eigen/Dense>
 #include <IUnityInterface.h>
+#include <algorithm>
 #include <dynmesh.hpp>
 #include <vector>
 
-Position neighbors[8] = {
-    Position(0, 0, 0), Position(1, 0, 0), Position(1, 0, 1), Position(0, 0, 1),
-    Position(0, 1, 0), Position(1, 1, 0), Position(1, 1, 1), Position(0, 1, 1),
+IVec3 neighbors[8] = {
+    IVec3(0, 0, 0), IVec3(1, 0, 0), IVec3(1, 0, 1), IVec3(0, 0, 1),
+    IVec3(0, 1, 0), IVec3(1, 1, 0), IVec3(1, 1, 1), IVec3(0, 1, 1),
 };
 
-Edge edges[12] = {
-    Edge(0, 1), Edge(1, 2), Edge(2, 3), Edge(3, 0), Edge(4, 5), Edge(5, 6),
-    Edge(6, 7), Edge(7, 4), Edge(0, 4), Edge(1, 5), Edge(2, 6), Edge(3, 7),
+IVec2 edges[12] = {
+    IVec2(0, 1), IVec2(1, 2), IVec2(2, 3), IVec2(3, 0),
+    IVec2(4, 5), IVec2(5, 6), IVec2(6, 7), IVec2(7, 4),
+    IVec2(0, 4), IVec2(1, 5), IVec2(2, 6), IVec2(3, 7),
 };
 
 float lerp(float a, float b, float t) { return a * (1.0 - t) + b * t; }
 
-VertexPosition lerp(const VertexPosition &a, const VertexPosition &b, float t) {
+Vec3 lerp(const Vec3 &a, const Vec3 &b, float t) {
   return a * (1.0 - t) + b * t;
 }
 
-Id get_id(const Position &position, int size) {
+int get_id(const IVec3 &position, int size) {
   return position[0] + position[1] * size + position[2] * size * size;
 }
 
-Position sample_neighbor(const Position &position, int neighbor_id,
-                         bool negative = false) {
+IVec3 sample_neighbor(const IVec3 &position, int neighbor_id,
+                      bool negative = false) {
   if (!negative) {
     return position + neighbors[neighbor_id];
   } else {
@@ -32,7 +34,7 @@ Position sample_neighbor(const Position &position, int neighbor_id,
   }
 }
 
-float sample_sdf(const VertexPosition &p, const SDFValue *sdf, int size) {
+float sample_sdf(const Vec3 &p, const float *sdf, int size) {
   int x0 = static_cast<int>(p.x());
   int y0 = static_cast<int>(p.y());
   int z0 = static_cast<int>(p.z());
@@ -44,41 +46,40 @@ float sample_sdf(const VertexPosition &p, const SDFValue *sdf, int size) {
   float yd = p.y() - y0;
   float zd = p.z() - z0;
 
-  float c00 = lerp(sdf[get_id(Position(x0, y0, z0), size)],
-                   +sdf[get_id(Position(x1, y0, z0), size)], xd);
-  float c01 = lerp(sdf[get_id(Position(x0, y0, z1), size)],
-                   sdf[get_id(Position(x1, y0, z1), size)], xd);
-  float c10 = lerp(sdf[get_id(Position(x0, y1, z0), size)],
-                   sdf[get_id(Position(x1, y1, z0), size)], xd);
-  float c11 = lerp(sdf[get_id(Position(x0, y1, z1), size)],
-                   sdf[get_id(Position(x1, y1, z1), size)], xd);
+  float c00 = lerp(sdf[get_id(IVec3(x0, y0, z0), size)],
+                   +sdf[get_id(IVec3(x1, y0, z0), size)], xd);
+  float c01 = lerp(sdf[get_id(IVec3(x0, y0, z1), size)],
+                   sdf[get_id(IVec3(x1, y0, z1), size)], xd);
+  float c10 = lerp(sdf[get_id(IVec3(x0, y1, z0), size)],
+                   sdf[get_id(IVec3(x1, y1, z0), size)], xd);
+  float c11 = lerp(sdf[get_id(IVec3(x0, y1, z1), size)],
+                   sdf[get_id(IVec3(x1, y1, z1), size)], xd);
   float c0 = lerp(c00, c10, yd);
   float c1 = lerp(c01, c11, yd);
   return lerp(c0, c1, zd);
 }
 
-VertexPosition sample_normal(const VertexPosition &p, const SDFValue *sdf,
-                             int size) {
+Vec3 sample_normal(const Vec3 &p, const float *sdf, int size) {
   float h = 0.01f;
-  float dx = sample_sdf(p + VertexPosition(h, 0, 0), sdf, size) -
-             sample_sdf(p - VertexPosition(h, 0, 0), sdf, size);
-  float dy = sample_sdf(p + VertexPosition(0, h, 0), sdf, size) -
-             sample_sdf(p - VertexPosition(0, h, 0), sdf, size);
-  float dz = sample_sdf(p + VertexPosition(0, 0, h), sdf, size) -
-             sample_sdf(p - VertexPosition(0, 0, h), sdf, size);
-  return VertexPosition(dx, dy, dz).normalized();
+  float dx = sample_sdf(p + Vec3(h, 0, 0), sdf, size) -
+             sample_sdf(p - Vec3(h, 0, 0), sdf, size);
+  float dy = sample_sdf(p + Vec3(0, h, 0), sdf, size) -
+             sample_sdf(p - Vec3(0, h, 0), sdf, size);
+  float dz = sample_sdf(p + Vec3(0, 0, h), sdf, size) -
+             sample_sdf(p - Vec3(0, 0, h), sdf, size);
+  return Vec3(dx, dy, dz).normalized();
 }
 
-VertexPosition sample_tangent(const VertexPosition &n) {
-  VertexPosition tangent_candidate = n.cross(VertexPosition(0.0f, 1.0f, 0.0f));
+Vec3 sample_tangent(const Vec3 &n) {
+  Vec3 tangent_candidate = n.cross(Vec3(0.0f, 1.0f, 0.0f));
   if (tangent_candidate.norm() < 1e-6) {
-    tangent_candidate = n.cross(VertexPosition(0.0f, 0.0f, 1.0f));
+    tangent_candidate = n.cross(Vec3(0.0f, 0.0f, 1.0f));
   }
   return tangent_candidate.normalized();
 }
 
-void make_face(VertexId *triangles, int &triangles_count, VertexId id0,
-               VertexId id1, VertexId id2, VertexId id3, bool outside) {
+void make_face(int *triangles, int &triangles_count, int id0, int id1, int id2,
+               int id3, bool outside) {
   if (outside) {
     triangles[triangles_count++] = id0;
     triangles[triangles_count++] = id3;
@@ -96,22 +97,21 @@ void make_face(VertexId *triangles, int &triangles_count, VertexId id0,
   }
 }
 
-// This function implements the naive surface nets algorithm.
-// vertices: array of VertexPosition, array length must be at least size^3.
-// triangles: array of VertexId, array length must be at least size^3 * 18.
-// sdf: array of SDFValue, array length must be at least size^3.
-extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API naive_surface_nets(
-    VertexPosition *vertices, VertexId *triangles, VertexPosition *normals,
-    VertexPosition *tangents, const SDFValue *sdf, int size) {
+extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API
+naive_surface_nets(Vec3 *vertices, Vec3 *normals, Vec4 *tangents,
+                   int *triangles, Bounds *bounds, const float *sdf, int size) {
+
+  Vec3 min_p = Vec3::Zero();
+  Vec3 max_p = Vec3::Zero();
 
   int vertex_count = 0;
   int triangle_count = 0;
-  auto indices = std::vector<VertexId>(size * size * size);
+  auto indices = std::vector<int>(size * size * size);
 
   for (int x = 0; x < size - 1; ++x) {
     for (int y = 0; y < size - 1; ++y) {
       for (int z = 0; z < size - 1; ++z) {
-        auto p = Position(x, y, z);
+        auto p = IVec3(x, y, z);
 
         int mask = 0;
         if (0.0f > sdf[get_id(sample_neighbor(p, 0), size)])
@@ -134,7 +134,10 @@ extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API naive_surface_nets(
         if (mask == 0 || mask == 255)
           continue;
 
-        VertexPosition vertex = VertexPosition::Zero();
+        min_p = min_p.cwiseMin(p.cast<float>());
+        max_p = max_p.cwiseMax(p.cast<float>());
+
+        Vec3 vertex = Vec3::Zero();
         int crossing_edge_count = 0;
 
         for (int i = 0; i < 12; ++i) {
@@ -154,10 +157,13 @@ extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API naive_surface_nets(
         }
 
         vertex /= static_cast<float>(crossing_edge_count);
+        Vec3 normal = sample_normal(vertex, sdf, size);
+        Vec3 tangent = sample_tangent(normals[vertex_count]);
 
         vertices[vertex_count] = vertex;
-        normals[vertex_count] = sample_normal(vertex, sdf, size);
-        tangents[vertex_count] = sample_tangent(normals[vertex_count]);
+        normals[vertex_count] = normal;
+        tangents[vertex_count] =
+            Vec4(tangent.x(), tangent.y(), tangent.z(), 0.0f);
 
         indices[get_id(p, size)] = vertex_count;
         ++vertex_count;
@@ -182,4 +188,9 @@ extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API naive_surface_nets(
       }
     }
   }
+
+  Vec3 center = (min_p + max_p) * 0.5f;
+  Vec3 extent = (max_p - min_p) * 0.5f;
+  *bounds = Bounds(center.x(), center.y(), center.z(), extent.x(), extent.y(),
+                   extent.z());
 }

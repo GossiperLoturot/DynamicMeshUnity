@@ -8,7 +8,7 @@ TEST(test, plane) {
   const int size = 16;
 
   // Create a plane SDF
-  std::vector<SDFValue> sdf(size * size * size);
+  std::vector<float> sdf(size * size * size);
   const float plane_y = (size - 1) / 2.0f;
   for (int z = 0; z < size; ++z) {
     for (int y = 0; y < size; ++y) {
@@ -19,15 +19,13 @@ TEST(test, plane) {
     }
   }
 
-  std::vector<VertexPosition> vertices(size * size * size,
-                                       VertexPosition::Zero());
-  std::vector<VertexId> triangles(size * size * size * 6, VertexId(0));
-  std::vector<VertexPosition> normals(size * size * size,
-                                      VertexPosition::Zero());
-  std::vector<VertexPosition> tangents(size * size * size,
-                                       VertexPosition::Zero());
-  naive_surface_nets(vertices.data(), triangles.data(), normals.data(),
-                     tangents.data(), sdf.data(), size);
+  std::vector<Vec3> vertices(size * size * size, Vec3::Zero());
+  std::vector<int> triangles(size * size * size * 6, 0);
+  std::vector<Vec3> normals(size * size * size, Vec3::Zero());
+  std::vector<Vec4> tangents(size * size * size, Vec4::Zero());
+  std::vector<Bounds> bounds(1, Bounds::Zero());
+  naive_surface_nets(vertices.data(), normals.data(), tangents.data(),
+                     triangles.data(), bounds.data(), sdf.data(), size);
 
   for (const auto &v : vertices) {
     if (v.norm() < 1e-6)
@@ -59,17 +57,15 @@ TEST(test, empty_space) {
   const int size = 16;
 
   // Create a empty space SDF
-  std::vector<SDFValue> sdf(size * size * size, 1.0f); // All positive
+  std::vector<float> sdf(size * size * size, 1.0f); // All positive
 
-  std::vector<VertexPosition> vertices(size * size * size,
-                                       VertexPosition::Zero());
-  std::vector<VertexId> triangles(size * size * size * 6, VertexId(0));
-  std::vector<VertexPosition> normals(size * size * size,
-                                      VertexPosition::Zero());
-  std::vector<VertexPosition> tangents(size * size * size,
-                                       VertexPosition::Zero());
-  naive_surface_nets(vertices.data(), triangles.data(), normals.data(),
-                     tangents.data(), sdf.data(), size);
+  std::vector<Vec3> vertices(size * size * size, Vec3::Zero());
+  std::vector<int> triangles(size * size * size * 6, 0);
+  std::vector<Vec3> normals(size * size * size, Vec3::Zero());
+  std::vector<Vec4> tangents(size * size * size, Vec4::Zero());
+  std::vector<Bounds> bounds(1, Bounds::Zero());
+  naive_surface_nets(vertices.data(), normals.data(), tangents.data(),
+                     triangles.data(), bounds.data(), sdf.data(), size);
 
   for (const auto &v : vertices) {
     ASSERT_TRUE(v.norm() < 1e-6);
@@ -83,17 +79,15 @@ TEST(test, full_space) {
   const int size = 16;
 
   // Create a full space SDF
-  std::vector<SDFValue> sdf(size * size * size, -1.0f); // All negative
+  std::vector<float> sdf(size * size * size, -1.0f); // All negative
 
-  std::vector<VertexPosition> vertices(size * size * size,
-                                       VertexPosition::Zero());
-  std::vector<VertexId> triangles(size * size * size * 6, VertexId(0));
-  std::vector<VertexPosition> normals(size * size * size,
-                                      VertexPosition::Zero());
-  std::vector<VertexPosition> tangents(size * size * size,
-                                       VertexPosition::Zero());
-  naive_surface_nets(vertices.data(), triangles.data(), normals.data(),
-                     tangents.data(), sdf.data(), size);
+  std::vector<Vec3> vertices(size * size * size, Vec3::Zero());
+  std::vector<int> triangles(size * size * size * 6, 0);
+  std::vector<Vec3> normals(size * size * size, Vec3::Zero());
+  std::vector<Vec4> tangents(size * size * size, Vec4::Zero());
+  std::vector<Bounds> bounds(1, Bounds::Zero());
+  naive_surface_nets(vertices.data(), normals.data(), tangents.data(),
+                     triangles.data(), bounds.data(), sdf.data(), size);
 
   for (const auto &v : vertices) {
     ASSERT_TRUE(v.norm() < 1e-6);
