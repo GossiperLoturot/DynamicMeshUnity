@@ -3,15 +3,15 @@
 #include <Eigen/Dense>
 #include <IUnityInterface.h>
 
-typedef float SDFValue;
+using SDFValue = float;
 
-typedef Eigen::Vector3i Position;
-typedef Eigen::Vector2i Edge;
-typedef int Id;
+using Position = Eigen::Vector3i;
+using Edge = Eigen::Vector2i;
+using Id = int;
 
-typedef Eigen::Vector3f VertexPosition;
-typedef int VertexId;
+using VertexPosition = Eigen::Vector3f;
+using VertexId = int;
 
-extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API naive_surface_nets(
-    VertexPosition *vertices, VertexId *triangles, VertexPosition *normals,
-    SDFValue *sdf, int size);
+extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API
+naive_surface_nets(VertexPosition *vertices, VertexId *triangles,
+                   VertexPosition *normals, const SDFValue *sdf, int size);

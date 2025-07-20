@@ -1,9 +1,18 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 project(dynmesh VERSION 0.1.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # ccls
+
+# mold linker
+find_program(HAS_MOLD mold)
+if (HAS_MOLD)
+  set(CMAKE_LINKER_FLAGS "-fuse-ld=mold")
+  message(STATUS "Using mold linker")
+else()
+  message(STATUS "mold linker not found, using default linker")
+endif()
 
 include(FetchContent)
 
@@ -23,8 +32,12 @@ FetchContent_MakeAvailable(googletest eigen)
 
 # library
 add_library(dynmesh SHARED src/dynmesh.cpp)
-target_link_libraries(dynmesh -static Eigen3::Eigen)
+target_link_libraries(dynmesh Eigen3::Eigen)
 target_include_directories(dynmesh PUBLIC include)
+# link for Windows
+if (WIN32)
+  target_link_options(dynmesh PRIVATE -static)
+endif()
 
 # test
 enable_testing()
