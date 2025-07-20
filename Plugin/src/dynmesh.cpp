@@ -69,6 +69,14 @@ VertexPosition sample_normal(const VertexPosition &p, const SDFValue *sdf,
   return VertexPosition(dx, dy, dz).normalized();
 }
 
+VertexPosition sample_tangent(const VertexPosition &n) {
+  VertexPosition tangent_candidate = n.cross(VertexPosition(0.0f, 1.0f, 0.0f));
+  if (tangent_candidate.norm() < 1e-6) {
+    tangent_candidate = n.cross(VertexPosition(0.0f, 0.0f, 1.0f));
+  }
+  return tangent_candidate.normalized();
+}
+
 void make_face(VertexId *triangles, int &triangles_count, VertexId id0,
                VertexId id1, VertexId id2, VertexId id3, bool outside) {
   if (outside) {
@@ -92,9 +100,9 @@ void make_face(VertexId *triangles, int &triangles_count, VertexId id0,
 // vertices: array of VertexPosition, array length must be at least size^3.
 // triangles: array of VertexId, array length must be at least size^3 * 18.
 // sdf: array of SDFValue, array length must be at least size^3.
-extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API
-naive_surface_nets(VertexPosition *vertices, VertexId *triangles,
-                   VertexPosition *normals, const SDFValue *sdf, int size) {
+extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API naive_surface_nets(
+    VertexPosition *vertices, VertexId *triangles, VertexPosition *normals,
+    VertexPosition *tangents, const SDFValue *sdf, int size) {
 
   int vertex_count = 0;
   int triangle_count = 0;
@@ -149,6 +157,8 @@ naive_surface_nets(VertexPosition *vertices, VertexId *triangles,
 
         vertices[vertex_count] = vertex;
         normals[vertex_count] = sample_normal(vertex, sdf, size);
+        tangents[vertex_count] = sample_tangent(normals[vertex_count]);
+
         indices[get_id(p, size)] = vertex_count;
         ++vertex_count;
 

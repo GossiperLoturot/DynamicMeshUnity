@@ -24,8 +24,10 @@ TEST(test, plane) {
   std::vector<VertexId> triangles(size * size * size * 6, VertexId(0));
   std::vector<VertexPosition> normals(size * size * size,
                                       VertexPosition::Zero());
+  std::vector<VertexPosition> tangents(size * size * size,
+                                       VertexPosition::Zero());
   naive_surface_nets(vertices.data(), triangles.data(), normals.data(),
-                     sdf.data(), size);
+                     tangents.data(), sdf.data(), size);
 
   for (const auto &v : vertices) {
     if (v.norm() < 1e-6)
@@ -64,8 +66,10 @@ TEST(test, empty_space) {
   std::vector<VertexId> triangles(size * size * size * 6, VertexId(0));
   std::vector<VertexPosition> normals(size * size * size,
                                       VertexPosition::Zero());
+  std::vector<VertexPosition> tangents(size * size * size,
+                                       VertexPosition::Zero());
   naive_surface_nets(vertices.data(), triangles.data(), normals.data(),
-                     sdf.data(), size);
+                     tangents.data(), sdf.data(), size);
 
   for (const auto &v : vertices) {
     ASSERT_TRUE(v.norm() < 1e-6);
@@ -86,8 +90,10 @@ TEST(test, full_space) {
   std::vector<VertexId> triangles(size * size * size * 6, VertexId(0));
   std::vector<VertexPosition> normals(size * size * size,
                                       VertexPosition::Zero());
+  std::vector<VertexPosition> tangents(size * size * size,
+                                       VertexPosition::Zero());
   naive_surface_nets(vertices.data(), triangles.data(), normals.data(),
-                     sdf.data(), size);
+                     tangents.data(), sdf.data(), size);
 
   for (const auto &v : vertices) {
     ASSERT_TRUE(v.norm() < 1e-6);
