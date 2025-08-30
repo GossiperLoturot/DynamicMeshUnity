@@ -31,7 +31,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest eigen)
 
 # library
-add_library(dynmesh SHARED src/dynmesh.cpp)
+add_library(dynmesh SHARED src/dynmesh.cc)
 target_link_libraries(dynmesh Eigen3::Eigen)
 target_include_directories(dynmesh PUBLIC include)
 # link for Windows
@@ -41,6 +41,6 @@ endif()
 
 # test
 enable_testing()
-add_executable(dynmesh_test test/main.cpp)
+add_executable(dynmesh_test test/main.cc)
 target_link_libraries(dynmesh_test GTest::gtest_main dynmesh)
 add_test(NAME test COMMAND dynmesh_test)
