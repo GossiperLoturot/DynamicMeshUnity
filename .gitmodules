@@ -1,0 +1,6 @@
+[submodule "Plugin/third_party/glm"]
+	path = Plugin/third_party/glm
+	url = https://github.com/g-truc/glm
+[submodule "Plugin/third_party/googletest"]
+	path = Plugin/third_party/googletest
+	url = https://github.com/google/googletest

@@ -4,90 +4,92 @@
 #include <vector>
 
 #include "IUnityInterface.h"
-#include <Eigen/Dense>
+#include "glm/geometric.hpp"
+#include "glm/vec2.hpp"
+#include "glm/vec3.hpp"
+#include "glm/vec4.hpp"
 
 namespace dynmesh {
 
 using namespace std;
-using namespace Eigen;
+using namespace glm;
 
 namespace {
 
-Vector3i neighbors[8] = {
-    Vector3i(0, 0, 0), Vector3i(1, 0, 0), Vector3i(1, 0, 1), Vector3i(0, 0, 1),
-    Vector3i(0, 1, 0), Vector3i(1, 1, 0), Vector3i(1, 1, 1), Vector3i(0, 1, 1),
+ivec3 neighbors[8] = {
+    ivec3(0, 0, 0), ivec3(1, 0, 0), ivec3(1, 0, 1), ivec3(0, 0, 1),
+    ivec3(0, 1, 0), ivec3(1, 1, 0), ivec3(1, 1, 1), ivec3(0, 1, 1),
 };
 
-Vector2i edges[12] = {
-    Vector2i(0, 1), Vector2i(1, 2), Vector2i(2, 3), Vector2i(3, 0),
-    Vector2i(4, 5), Vector2i(5, 6), Vector2i(6, 7), Vector2i(7, 4),
-    Vector2i(0, 4), Vector2i(1, 5), Vector2i(2, 6), Vector2i(3, 7),
+ivec2 edges[12] = {
+    ivec2(0, 1), ivec2(1, 2), ivec2(2, 3), ivec2(3, 0),
+    ivec2(4, 5), ivec2(5, 6), ivec2(6, 7), ivec2(7, 4),
+    ivec2(0, 4), ivec2(1, 5), ivec2(2, 6), ivec2(3, 7),
 };
 
-float lerp(const float a, const float b, const float t) {
-  return a * (1.0f - t) + b * t;
+int32_t get_id(const ivec3 &p, const int32_t size) {
+  return p.x + p.y * size + p.z * size * size;
 }
 
-const Vector3f lerp(const Vector3f &a, const Vector3f &b, const float t) {
-  return a * (1.0f - t) + b * t;
+float lerp(const float &a, const float &b, const float &t) {
+  return a + (b - a) * t;
 }
 
-int32_t get_id(const Vector3i &p, const int32_t size) {
-  return p[0] + p[1] * size + p[2] * size * size;
+vec3 lerp(const vec3 &a, const vec3 &b, const float &t) {
+  return a + (b - a) * t;
 }
 
-Vector3i sample_neighbor_p(const Vector3i &p, const int32_t neighbor_id) {
+ivec3 sample_neighbor_p(const ivec3 &p, const int32_t neighbor_id) {
   return p + neighbors[neighbor_id];
 }
 
-Vector3i sample_neighbor_n(const Vector3i &p, const int32_t neighbor_id) {
+ivec3 sample_neighbor_n(const ivec3 &p, const int32_t neighbor_id) {
   return p - neighbors[neighbor_id];
 }
 
-float sample_sdf(const Vector3f &p, const float *sdf, const int32_t size) {
-  const int32_t x0 = static_cast<int32_t>(p.x());
-  const int32_t y0 = static_cast<int32_t>(p.y());
-  const int32_t z0 = static_cast<int32_t>(p.z());
+float sample_sdf(const vec3 &p, const float *sdf, const int32_t size) {
+  const int32_t x0 = int32_t(p.x);
+  const int32_t y0 = int32_t(p.y);
+  const int32_t z0 = int32_t(p.z);
   const int32_t x1 = x0 + 1;
   const int32_t y1 = y0 + 1;
   const int32_t z1 = z0 + 1;
 
-  const float xd = p.x() - static_cast<float>(x0);
-  const float yd = p.y() - static_cast<float>(y0);
-  const float zd = p.z() - static_cast<float>(z0);
+  const float xd = p.x - float(x0);
+  const float yd = p.y - float(y0);
+  const float zd = p.z - float(z0);
 
-  const float c00 = lerp(sdf[get_id(Vector3i(x0, y0, z0), size)],
-                         +sdf[get_id(Vector3i(x1, y0, z0), size)], xd);
-  const float c01 = lerp(sdf[get_id(Vector3i(x0, y0, z1), size)],
-                         sdf[get_id(Vector3i(x1, y0, z1), size)], xd);
-  const float c10 = lerp(sdf[get_id(Vector3i(x0, y1, z0), size)],
-                         sdf[get_id(Vector3i(x1, y1, z0), size)], xd);
-  const float c11 = lerp(sdf[get_id(Vector3i(x0, y1, z1), size)],
-                         sdf[get_id(Vector3i(x1, y1, z1), size)], xd);
+  const float c00 = lerp(sdf[get_id(ivec3(x0, y0, z0), size)],
+                         +sdf[get_id(ivec3(x1, y0, z0), size)], xd);
+  const float c01 = lerp(sdf[get_id(ivec3(x0, y0, z1), size)],
+                         sdf[get_id(ivec3(x1, y0, z1), size)], xd);
+  const float c10 = lerp(sdf[get_id(ivec3(x0, y1, z0), size)],
+                         sdf[get_id(ivec3(x1, y1, z0), size)], xd);
+  const float c11 = lerp(sdf[get_id(ivec3(x0, y1, z1), size)],
+                         sdf[get_id(ivec3(x1, y1, z1), size)], xd);
   const float c0 = lerp(c00, c10, yd);
   const float c1 = lerp(c01, c11, yd);
   return lerp(c0, c1, zd);
 }
 
-Vector3f sample_normal(const Vector3f &p, const float *sdf,
-                       const int32_t size) {
+vec3 sample_normal(const vec3 &p, const float *sdf, const int32_t size) {
   constexpr float h = 0.01f;
 
-  const float dx = sample_sdf(p + Vector3f(h, 0.0f, 0.0f), sdf, size) -
-                   sample_sdf(p - Vector3f(h, 0.0f, 0.0f), sdf, size);
-  const float dy = sample_sdf(p + Vector3f(0.0f, h, 0.0f), sdf, size) -
-                   sample_sdf(p - Vector3f(0.0f, h, 0.0f), sdf, size);
-  const float dz = sample_sdf(p + Vector3f(0.0f, 0.0f, h), sdf, size) -
-                   sample_sdf(p - Vector3f(0.0f, 0.0f, h), sdf, size);
-  return Vector3f(dx, dy, dz).normalized();
+  const float dx = sample_sdf(p + vec3(h, 0.0f, 0.0f), sdf, size) -
+                   sample_sdf(p - vec3(h, 0.0f, 0.0f), sdf, size);
+  const float dy = sample_sdf(p + vec3(0.0f, h, 0.0f), sdf, size) -
+                   sample_sdf(p - vec3(0.0f, h, 0.0f), sdf, size);
+  const float dz = sample_sdf(p + vec3(0.0f, 0.0f, h), sdf, size) -
+                   sample_sdf(p - vec3(0.0f, 0.0f, h), sdf, size);
+  return normalize(vec3(dx, dy, dz));
 }
 
-Vector3f sample_tangent(const Vector3f &n) {
-  Vector3f tangent_candidate = n.cross(Vector3f(0.0f, 1.0f, 0.0f));
-  if (tangent_candidate.norm() < 1e-6) {
-    tangent_candidate = n.cross(Vector3f(0.0f, 0.0f, 1.0f));
+vec3 sample_tangent(const vec3 &n) {
+  vec3 tangent_candidate = cross(n, vec3(0.0f, 1.0f, 0.0f));
+  if (dot(tangent_candidate, tangent_candidate) < 1e-6) {
+    tangent_candidate = cross(n, vec3(0.0f, 0.0f, 1.0f));
   }
-  return tangent_candidate.normalized();
+  return normalize(tangent_candidate);
 }
 
 void make_face(int32_t *triangles, int32_t *triangles_count, const int32_t id0,
@@ -115,12 +117,12 @@ void make_face(int32_t *triangles, int32_t *triangles_count, const int32_t id0,
 extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API naive_surface_nets(
     const float *sdf, const int32_t size, float *vertices, float *normals,
     float *tangents, int32_t *triangles, float bounds[6]) {
-  Vector3f *vertices_repr = reinterpret_cast<Vector3f *>(vertices);
-  Vector3f *normals_repr = reinterpret_cast<Vector3f *>(normals);
-  Vector4f *tangents_repr = reinterpret_cast<Vector4f *>(tangents);
+  vec3 *vertices_repr = reinterpret_cast<vec3 *>(vertices);
+  vec3 *normals_repr = reinterpret_cast<vec3 *>(normals);
+  vec4 *tangents_repr = reinterpret_cast<vec4 *>(tangents);
 
-  Vector3f min_p = Vector3f::Zero();
-  Vector3f max_p = Vector3f::Zero();
+  vec3 min_bound = vec3(0.0f, 0.0f, 0.0f);
+  vec3 max_bound = vec3(0.0f, 0.0f, 0.0f);
 
   int32_t vertex_count = 0;
   int32_t triangle_count = 0;
@@ -129,7 +131,7 @@ extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API naive_surface_nets(
   for (int32_t x = 0; x < size - 1; ++x) {
     for (int32_t y = 0; y < size - 1; ++y) {
       for (int32_t z = 0; z < size - 1; ++z) {
-        const Vector3i p = Vector3i(x, y, z);
+        const ivec3 p = ivec3(x, y, z);
 
         int32_t mask = 0;
         if (0.0f > sdf[get_id(sample_neighbor_p(p, 0), size)])
@@ -152,36 +154,39 @@ extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API naive_surface_nets(
         if (mask == 0 || mask == 255)
           continue;
 
-        min_p = min_p.cwiseMin(p.cast<float>());
-        max_p = max_p.cwiseMax(p.cast<float>());
+        min_bound.x = glm::min(min_bound.x, float(p.x));
+        min_bound.y = glm::min(min_bound.y, float(p.y));
+        min_bound.z = glm::min(min_bound.z, float(p.z));
 
-        Vector3f vertex = Vector3f::Zero();
+        max_bound.x = glm::max(max_bound.x, float(p.x));
+        max_bound.y = glm::max(max_bound.y, float(p.y));
+        max_bound.z = glm::max(max_bound.z, float(p.z));
+
+        vec3 vertex = vec3(0.0f, 0.0f, 0.0f);
         int32_t crossing_edge_count = 0;
 
         for (int32_t i = 0; i < 12; ++i) {
-          const int32_t nid0 = edges[i][0];
-          const int32_t nid1 = edges[i][1];
+          const int32_t nid0 = edges[i].x;
+          const int32_t nid1 = edges[i].y;
 
           if ((mask >> nid0 & 1) == (mask >> nid1 & 1))
             continue;
 
-          const Vector3i p0 = sample_neighbor_p(p, nid0);
-          const Vector3i p1 = sample_neighbor_p(p, nid1);
+          const ivec3 p0 = sample_neighbor_p(p, nid0);
+          const ivec3 p1 = sample_neighbor_p(p, nid1);
           const float sd0 = sdf[get_id(p0, size)];
           const float sd1 = sdf[get_id(p1, size)];
-          vertex += lerp(p0.cast<float>(), p1.cast<float>(),
-                         (0.0f - sd0) / (sd1 - sd0));
+          vertex += lerp(vec3(p0), vec3(p1), (0.0f - sd0) / (sd1 - sd0));
           ++crossing_edge_count;
         }
 
-        vertex /= static_cast<float>(crossing_edge_count);
-        const Vector3f normal = sample_normal(vertex, sdf, size);
-        const Vector3f tangent = sample_tangent(normal);
+        vertex /= float(crossing_edge_count);
+        const vec3 normal = sample_normal(vertex, sdf, size);
+        const vec3 tangent = sample_tangent(normal);
 
         vertices_repr[vertex_count] = vertex;
         normals_repr[vertex_count] = normal;
-        tangents_repr[vertex_count] =
-            Vector4f(tangent.x(), tangent.y(), tangent.z(), 0.0f);
+        tangents_repr[vertex_count] = vec4(tangent, 0.0f);
 
         indices[get_id(p, size)] = vertex_count;
         ++vertex_count;
@@ -207,15 +212,15 @@ extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API naive_surface_nets(
     }
   }
 
-  const Vector3f center = (min_p + max_p) * 0.5f;
-  bounds[0] = center.x();
-  bounds[1] = center.y();
-  bounds[2] = center.z();
+  const vec3 center = (min_bound + max_bound) * 0.5f;
+  bounds[0] = center.x;
+  bounds[1] = center.y;
+  bounds[2] = center.z;
 
-  const Vector3f extent = (max_p - min_p) * 0.5f;
-  bounds[3] = extent.x();
-  bounds[4] = extent.y();
-  bounds[5] = extent.z();
+  const vec3 extent = (max_bound - min_bound) * 0.5f;
+  bounds[3] = extent.x;
+  bounds[4] = extent.y;
+  bounds[5] = extent.z;
 }
 
 } // namespace dynmesh

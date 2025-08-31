@@ -3,7 +3,6 @@
 #include <cstdint>
 
 #include "IUnityInterface.h"
-#include <Eigen/Dense>
 
 namespace dynmesh {
 
