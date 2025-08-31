@@ -41,7 +41,7 @@ Vector3i sample_neighbor_p(const Vector3i &p, const int32_t neighbor_id) {
 }
 
 Vector3i sample_neighbor_n(const Vector3i &p, const int32_t neighbor_id) {
-  return p + neighbors[neighbor_id];
+  return p - neighbors[neighbor_id];
 }
 
 float sample_sdf(const Vector3f &p, const float *sdf, const int32_t size) {
